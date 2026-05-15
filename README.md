@@ -20,138 +20,126 @@ STEP-5: Read the characters row wise or column wise in the former order to get t
 
 # PROGRAM
 ```
+
+
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 
-void encryptRailFence(char str[], int rails, char encrypted[]) {
-    int i, j, len, count, code[100][1000];
+// Encryption
+void encrypt(char text[], int key) {
+    int len = strlen(text);
+    char rail[key][len];
 
-    len = strlen(str);
+    // Fill matrix with '\n'
+    for(int i = 0; i < key; i++)
+        for(int j = 0; j < len; j++)
+            rail[i][j] = '\n';
 
-    // Initialize matrix
-    for (i = 0; i < rails; i++) {
-        for (j = 0; j < len; j++) {
-            code[i][j] = 0;
-        }
+    int row = 0, dir = 1;
+
+    // Place characters in zig-zag
+    for(int i = 0; i < len; i++) {
+        rail[row][i] = text[i];
+
+        if(row == 0)
+            dir = 1;
+        else if(row == key - 1)
+            dir = -1;
+
+        row += dir;
     }
 
-    count = 0;
-    j = 0;
-
-    while (j < len) {
-        if (count % 2 == 0) { // Moving down
-            for (i = 0; i < rails && j < len; i++) {
-                code[i][j] = (int)str[j];
-                j++;
-            }
-        } else { // Moving up
-            for (i = rails - 2; i > 0 && j < len; i--) {
-                code[i][j] = (int)str[j];
-                j++;
-            }
-        }
-        count++;
-    }
-
-    int pos = 0;
-
-    for (i = 0; i < rails; i++) {
-        for (j = 0; j < len; j++) {
-            if (code[i][j] != 0) {
-                encrypted[pos++] = code[i][j];
-            }
+    // Read row-wise
+    int k = 0;
+    for(int i = 0; i < key; i++) {
+        for(int j = 0; j < len; j++) {
+            if(rail[i][j] != '\n')
+                text[k++] = rail[i][j];
         }
     }
-
-    encrypted[pos] = '\0';
+    text[k] = '\0';
 }
 
-void decryptRailFence(char str[], int rails, char decrypted[]) {
-    int i, j, len, count, code[100][1000], pos = 0;
+// Decryption
+void decrypt(char text[], int key) {
+    int len = strlen(text);
+    char rail[key][len];
 
-    len = strlen(str);
+    // Fill with '\n'
+    for(int i = 0; i < key; i++)
+        for(int j = 0; j < len; j++)
+            rail[i][j] = '\n';
 
-    // Initialize matrix
-    for (i = 0; i < rails; i++) {
-        for (j = 0; j < len; j++) {
-            code[i][j] = 0;
+    int row = 0, dir = 1;
+
+    // Mark zig-zag positions
+    for(int i = 0; i < len; i++) {
+        rail[row][i] = '*';
+
+        if(row == 0)
+            dir = 1;
+        else if(row == key - 1)
+            dir = -1;
+
+        row += dir;
+    }
+
+    // Fill characters row-wise
+    int k = 0;
+    for(int i = 0; i < key; i++) {
+        for(int j = 0; j < len; j++) {
+            if(rail[i][j] == '*' && k < len)
+                rail[i][j] = text[k++];
         }
     }
 
-    count = 0;
-    j = 0;
+    // Read zig-zag to reconstruct
+    row = 0; dir = 1;
+    k = 0;
 
-    while (j < len) {
-        if (count % 2 == 0) {
-            for (i = 0; i < rails && j < len; i++) {
-                code[i][j] = 1;
-                j++;
-            }
-        } else {
-            for (i = rails - 2; i > 0 && j < len; i--) {
-                code[i][j] = 1;
-                j++;
-            }
-        }
-        count++;
+    for(int i = 0; i < len; i++) {
+        text[k++] = rail[row][i];
+
+        if(row == 0)
+            dir = 1;
+        else if(row == key - 1)
+            dir = -1;
+
+        row += dir;
     }
-
-    for (i = 0; i < rails; i++) {
-        for (j = 0; j < len; j++) {
-            if (code[i][j] == 1) {
-                code[i][j] = str[pos++];
-            }
-        }
-    }
-
-    pos = 0;
-    count = 0;
-    j = 0;
-
-    while (j < len) {
-        if (count % 2 == 0) { // Moving down
-            for (i = 0; i < rails && j < len; i++) {
-                if (code[i][j] != 0) {
-                    decrypted[pos++] = code[i][j];
-                }
-                j++;
-            }
-        } else { // Moving up
-            for (i = rails - 2; i > 0 && j < len; i--) {
-                if (code[i][j] != 0) {
-                    decrypted[pos++] = code[i][j];
-                }
-                j++;
-            }
-        }
-        count++;
-    }
-
-    decrypted[pos] = '\0';
+    text[k] = '\0';
 }
 
 int main() {
-    char str[1000] = "212224230231RITHIKA";
-    char encrypted[1000], decrypted[1000];
-    int rails = 4;
+    char text[100];
+    int key;
 
-    printf("Simulating Rail Fence Cipher\n");
+    // Input
+    printf("Enter plaintext: ");
+    fgets(text, sizeof(text), stdin);
 
-    printf("Enter a Secret Message: %s\n", str);
-    printf("Enter number of rails: %d\n", rails);
+    printf("Enter key (number of rails): ");
+    scanf("%d", &key);
 
-    encryptRailFence(str, rails, encrypted);
-    printf("Encrypted Message: %s\n", encrypted);
+    // Remove newline from fgets
+    text[strcspn(text, "\n")] = '\0';
 
-    decryptRailFence(encrypted, rails, decrypted);
-    printf("Decrypted Message: %s\n", decrypted);
+    // Encrypt
+    encrypt(text, key);
+    printf("Encrypted text: %s\n", text);
+
+    // Decrypt
+    decrypt(text, key);
+    printf("Decrypted text: %s\n", text);
 
     return 0;
 }
+
+
 ```
 # OUTPUT
-<img width="832" height="618" alt="image" src="https://github.com/user-attachments/assets/1e518f37-e866-4330-8052-a57532b91918" />
+<img width="1667" height="1023" alt="image" src="https://github.com/user-attachments/assets/24f577ef-8b5d-4b4e-bef2-78c58441fb24" />
+
 
 # RESULT
  C program to implement the rail fence transposition technique is sucessfully verified
